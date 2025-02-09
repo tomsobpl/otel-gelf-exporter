@@ -44,27 +44,83 @@ func (e *gelfUdpExporter) start(ctx context.Context, host component.Host) error 
 	return nil
 }
 
-func (e *gelfUdpExporter) pushLogs(_ context.Context, ld plog.Logs) error {
-	e.logger.Info("Logs",
-		zap.Int("resource logs", ld.ResourceLogs().Len()),
-		zap.Int("log records", ld.LogRecordCount()))
+func (e *gelfUdpExporter) handleLogRecord(lr plog.LogRecord) *gelf.Message {
+	//@TODO: Host should be constructed from the record
+	//@TODO: Full message implementation
+	//@TODO: TimeUnix from ObservedTimestamp if Timestamp is not set
+	//@TODO: SeverityNumber should be mapped into GELF/Syslog levels
+	//@TODO: Attributes should be written as additional fields
 
-	m := &gelf.Message{
+	return &gelf.Message{
 		Version:  "1.1",
-		Host:     "hostname",
-		Short:    "Some kind of error",
-		Full:     "Optional full error message",
-		TimeUnix: float64(time.Now().UnixNano()) / float64(time.Second),
-		Level:    1,
+		Host:     "TODO",
+		Short:    lr.Body().AsString(),
+		Full:     "TODO",
+		TimeUnix: float64(lr.Timestamp()) / float64(time.Second),
+		Level:    int32(lr.SeverityNumber()),
 		Facility: "",
-		Extra:    nil,
+		Extra: map[string]interface{}{
+			"otel_log_dropped_attributes_count": lr.DroppedAttributesCount(),
+			"otel_log_event_name":               lr.EventName(),
+			"otel_log_severity_text":            lr.SeverityText(),
+			"otel_log_span_id":                  lr.SpanID().String(),
+			"otel_log_trace_id":                 lr.TraceID().String(),
+		},
 		RawExtra: nil,
 	}
+}
 
-	err := e.writer.WriteMessage(m)
+func (e *gelfUdpExporter) handleScopeLog(sl plog.ScopeLogs) []*gelf.Message {
+	msgs := make([]*gelf.Message, 0)
 
-	if err != nil {
-		e.logger.Error(err.Error())
+	for i := 0; i < sl.LogRecords().Len(); i++ {
+		msgs = append(msgs, e.handleLogRecord(sl.LogRecords().At(i)))
+	}
+
+	//@TODO: Attributes should be written as additional fields
+
+	for _, m := range msgs {
+		m.Extra["otel_scope_dropped_attributes_count"] = sl.Scope().DroppedAttributesCount()
+		m.Extra["otel_scope_name"] = sl.Scope().Name()
+		m.Extra["otel_scope_version"] = sl.Scope().Version()
+	}
+
+	return msgs
+}
+
+func (e *gelfUdpExporter) handleResourceLog(rl plog.ResourceLogs) []*gelf.Message {
+	msgs := make([]*gelf.Message, 0)
+
+	for i := 0; i < rl.ScopeLogs().Len(); i++ {
+		msgs = append(msgs, e.handleScopeLog(rl.ScopeLogs().At(i))...)
+	}
+
+	//@TODO: Attributes should be written as additional fields
+
+	for _, m := range msgs {
+		m.Extra["otel_resource_dropped_attributes_count"] = rl.Resource().DroppedAttributesCount()
+	}
+
+	return msgs
+}
+
+func (e *gelfUdpExporter) pushLogs(_ context.Context, ld plog.Logs) error {
+	e.logger.Info(fmt.Sprintf("Processing %d resource log(s) with %d log record(s)", ld.ResourceLogs(), ld.LogRecordCount()))
+
+	msgs := make([]*gelf.Message, 0)
+
+	for i := 0; i < ld.ResourceLogs().Len(); i++ {
+		msgs = append(msgs, e.handleResourceLog(ld.ResourceLogs().At(i))...)
+	}
+
+	for _, m := range msgs {
+		//@TODO: Target should be refreshed if setup in config to allow for load balancing usage
+
+		err := e.writer.WriteMessage(m)
+
+		if err != nil {
+			e.logger.Error(err.Error())
+		}
 	}
 
 	return nil

@@ -1,110 +1,47 @@
 import logging
-import os
-import random
-import string
 import time
+import signal
 
-from secrets import token_bytes
+from opentelemetry._logs import set_logger_provider
+from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+from opentelemetry.sdk.resources import Resource
 
-import requests
+# Create and set the logger provider
+logger_provider = LoggerProvider()
+set_logger_provider(logger_provider)
 
-def otlp_log_sample():
-    sample = {
-        "resourceLogs": [
-            {
-                "resource": {
-                    "attributes": [
-                        {
-                            "key": "service.name",
-                            "value": { "stringValue": "my.service" }
-                        }
-                    ]
-                },
-                "scopeLogs": [
-                    {
-                        "scope": {
-                            "name": "my.library",
-                            "version": "1.0.0",
-                            "attributes": [
-                                {
-                                    "key": "my.scope.attribute",
-                                    "value": { "stringValue": "some scope attribute" }
-                                }
-                            ]
-                        },
-                        "logRecords": [
-                            {
-                                "timeUnixNano": time.time_ns(),
-                                "observedTimeUnixNano": time.time_ns() - 10_000,
-                                "severityNumber": random.randint(0, 9),
-                                "severityText": "Information",
-                                "traceId": token_bytes(16).hex(),
-                                "spanId": token_bytes(8).hex(),
-                                "body": {
-                                    "stringValue": ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
-                                },
-                                "attributes": [
-                                    {
-                                        "key": "string.attribute",
-                                        "value": { "stringValue": ''.join(random.choices(string.ascii_uppercase + string.digits, k=20)) }
-                                    },
-                                    {
-                                        "key": "boolean.attribute",
-                                        "value": { "boolValue": random.choice([True, False]) }
-                                    },
-                                    {
-                                        "key": "int.attribute",
-                                        "value": { "intValue": random.randint(0, 100) }
-                                    },
-                                    {
-                                        "key": "double.attribute",
-                                        "value": { "doubleValue": random.uniform(0, 100) }
-                                    },
-                                    {
-                                        "key": "array.attribute",
-                                        "value": {
-                                            "arrayValue": {
-                                                "values": [
-                                                    { "stringValue": "many" }, { "stringValue": "values" }
-                                                ]
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "key": "map.attribute",
-                                        "value": {
-                                            "kvlistValue": {
-                                                "values": [
-                                                    {
-                                                        "key": "some.map.key",
-                                                        "value": { "stringValue": "some value" }
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-    }
+# Create the OTLP log exporter that sends logs to configured destination
+exporter = OTLPLogExporter()
+logger_provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
 
-    return sample
+# Attach OTLP handler to root logger
+handler = LoggingHandler(logger_provider=logger_provider)
+logging.getLogger().addHandler(handler)
+
+logger = logging.getLogger(__name__)
+
+keep_going = True
+
+def shutdown(signum, frame):
+    global keep_going
+
+    logging.info("Shutting down")
+    keep_going = False
 
 def main():
-    logger = logging.getLogger()
+    global keep_going
 
-    while True:
-        try:
-            logger.info("Sending log sample ...")
-            requests.post(os.environ.get('OTLP_HTTP_ENDPOINT'), json=otlp_log_sample())
-        except Exception as e:
-            logger.error(f"Failed to send log sample: {e}")
+    logger.info("Starting the application")
 
+    while keep_going:
+        logger.warning("Something interesting happened")
         time.sleep(3)
 
+    logger_provider.shutdown()
+
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, shutdown)
     main()
+    logger.info("Bye!")

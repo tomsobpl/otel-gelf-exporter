@@ -60,7 +60,9 @@ services:
       context: ".docker/otlp_producer"
       dockerfile: "Dockerfile"
     environment:
-      OTLP_HTTP_ENDPOINT: "http://172.17.0.1:4318/v1/logs"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "172.17.0.1:4317"
+      OTEL_EXPORTER_OTLP_INSECURE: "true"
+      OTEL_SERVICE_NAME: "otlp-producer"
     stdin_open: true
     stop_grace_period: "1s"
     tty: true
