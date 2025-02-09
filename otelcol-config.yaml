@@ -9,6 +9,7 @@ exporters:
   debug:
     verbosity: detailed
   gelfudp:
+    endpoint: localhost:12201
 service:
   pipelines:
     logs:

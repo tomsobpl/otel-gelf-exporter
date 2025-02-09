@@ -17,21 +17,12 @@ func NewFactory() exporter.Factory {
 	)
 }
 
-type Config struct {
-	Endpoint string `mapstructure:"endpoint"`
-	Protocol string `mapstructure:"protocol"`
-}
-
-func createDefaultConfig() component.Config {
-	return &Config{}
-}
-
 func createLogsExporter(
 	ctx context.Context,
 	set exporter.Settings,
 	cfg component.Config) (exporter.Logs, error) {
 
-	e := newGelfUdpExporter(set)
+	e := newGelfUdpExporter(cfg, set)
 	//cfg, ok := cfg.(*Config)
 
 	//if !ok {
