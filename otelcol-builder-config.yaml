@@ -1,0 +1,11 @@
+dist:
+  name: otelcol-custom
+  description: Local OpenTelemetry Collector binary
+  output_path: /tmp/otelcol-dev
+  debug_compilation: true
+exporters:
+  - gomod: go.opentelemetry.io/collector/exporter/debugexporter v0.119.0
+  - gomod: github.com/tomsobpl/otel-collector-graylog/exporter/gelfudpexporter v0.0.1
+    path: /src/exporter/gelfudpexporter
+receivers:
+  - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.119.0

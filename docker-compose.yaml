@@ -1,0 +1,72 @@
+services:
+  graylog_datanode:
+    image: "${DATANODE_IMAGE:-graylog/graylog-datanode:6.1}"
+    hostname: "datanode"
+    environment:
+      GRAYLOG_DATANODE_NODE_ID_FILE: "/var/lib/graylog-datanode/node-id"
+      GRAYLOG_DATANODE_PASSWORD_SECRET: ""
+      GRAYLOG_DATANODE_ROOT_PASSWORD_SHA2: ""
+      GRAYLOG_DATANODE_MONGODB_URI: "mongodb://graylog_mongodb:27017/graylog"
+    ulimits:
+      memlock:
+        hard: -1
+        soft: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - "8999:8999/tcp"   # DataNode API
+      - "9200:9200/tcp"
+      - "9300:9300/tcp"
+    volumes:
+      - "graylog_datanode:/var/lib/graylog-datanode"
+
+  graylog_mongodb:
+    image: "mongo:5.0"
+    volumes:
+      - "graylog_mongodb:/data/db"
+
+  graylog_server:
+    hostname: "server"
+    image: "${GRAYLOG_IMAGE:-graylog/graylog:6.1}"
+    depends_on:
+      graylog_mongodb:
+        condition: "service_started"
+    entrypoint: "/usr/bin/tini --  /docker-entrypoint.sh"
+    environment:
+      GRAYLOG_NODE_ID_FILE: "/usr/share/graylog/data/data/node-id"
+      GRAYLOG_PASSWORD_SECRET: ""
+      GRAYLOG_ROOT_PASSWORD_SHA2: ""
+      GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9000"
+      GRAYLOG_HTTP_EXTERNAL_URI: "http://localhost:9000/"
+      GRAYLOG_MONGODB_URI: "mongodb://graylog_mongodb:27017/graylog"
+    ports:
+      - "5044:5044/tcp"   # Beats
+      - "5140:5140/udp"   # Syslog
+      - "5140:5140/tcp"   # Syslog
+      - "5555:5555/tcp"   # RAW TCP
+      - "5555:5555/udp"   # RAW UDP
+      - "9000:9000/tcp"   # Server API
+      - "12201:12201/tcp" # GELF TCP
+      - "12201:12201/udp" # GELF UDP
+      - "13301:13301/tcp" # Forwarder data
+      - "13302:13302/tcp" # Forwarder config
+    volumes:
+      - "graylog_server_data:/usr/share/graylog/data/data"
+      - "graylog_server_journal:/usr/share/graylog/data/journal"
+
+  otlp_producer:
+    build:
+      context: ".docker/otlp_producer"
+      dockerfile: "Dockerfile"
+    environment:
+      OTLP_HTTP_ENDPOINT: "http://172.17.0.1:4318/v1/logs"
+    stdin_open: true
+    stop_grace_period: "1s"
+    tty: true
+
+volumes:
+    graylog_datanode:
+    graylog_mongodb:
+    graylog_server_data:
+    graylog_server_journal:
