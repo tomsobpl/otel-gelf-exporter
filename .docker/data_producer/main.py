@@ -35,8 +35,12 @@ def main():
 
     logger.info("Starting the application")
 
+    log_id = 0
+
     while keep_going:
-        logger.warning("Something interesting happened")
+        logger.warning(f"Log incident #{log_id}")
+
+        log_id += 1
         time.sleep(3)
 
     logger_provider.shutdown()
