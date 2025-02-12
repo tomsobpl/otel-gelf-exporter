@@ -62,7 +62,7 @@ func (e *gelfUdpExporter) handleLogRecord(lr plog.LogRecord) *gelf.Message {
 		Extra: map[string]interface{}{
 			"otel_log_dropped_attributes_count": lr.DroppedAttributesCount(),
 			"otel_log_event_name":               lr.EventName(),
-			"otel_log_severity_number":          lr.SeverityNumber().String(),
+			"otel_log_severity_number":          lr.SeverityNumber(),
 			"otel_log_severity_text":            lr.SeverityText(),
 			"otel_log_span_id":                  lr.SpanID().String(),
 			"otel_log_trace_id":                 lr.TraceID().String(),

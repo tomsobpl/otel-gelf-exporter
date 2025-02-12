@@ -71,8 +71,8 @@ services:
 
   otel_collector:
     build:
-      context: ".docker/otel_collector"
-      dockerfile: "Dockerfile"
+      context: "."
+      dockerfile: ".docker/otel_collector/Dockerfile"
     environment:
       OTEL_EXPORTER_GELF_UDP_ENDPOINT: "graylog_server:12201"
     stdin_open: true
