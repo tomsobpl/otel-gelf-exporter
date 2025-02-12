@@ -55,17 +55,31 @@ services:
       - "graylog_server_data:/usr/share/graylog/data/data"
       - "graylog_server_journal:/usr/share/graylog/data/journal"
 
-  otlp_producer:
+  otel_collector:
     build:
-      context: ".docker/otlp_producer"
+      context: ".docker/otel_collector"
       dockerfile: "Dockerfile"
     environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: "172.17.0.1:4317"
-      OTEL_EXPORTER_OTLP_INSECURE: "true"
-      OTEL_SERVICE_NAME: "otlp-producer"
+      OTEL_EXPORTER_GELF_UDP_ENDPOINT: "graylog_server:12201"
     stdin_open: true
     stop_grace_period: "1s"
     tty: true
+    volumes:
+      - ".docker/otel_collector/config.yaml:/app/config.yaml"
+
+  data_producer:
+    build:
+      context: ".docker/data_producer"
+      dockerfile: "Dockerfile"
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "otel_collector:4317"
+      OTEL_EXPORTER_OTLP_INSECURE: "true"
+      OTEL_SERVICE_NAME: "data_producer"
+    stdin_open: true
+    stop_grace_period: "1s"
+    tty: true
+    volumes:
+      - ".docker/data_producer:/usr/src/app"
 
 volumes:
     graylog_datanode:

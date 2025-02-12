@@ -9,7 +9,7 @@ exporters:
   debug:
     verbosity: detailed
   gelfudp:
-    endpoint: localhost:12201
+    endpoint: ${env:OTEL_EXPORTER_GELF_UDP_ENDPOINT}
 service:
   pipelines:
     logs:
