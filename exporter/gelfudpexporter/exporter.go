@@ -9,7 +9,6 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.uber.org/zap"
 	"gopkg.in/Graylog2/go-gelf.v2/gelf"
-	"time"
 )
 
 type gelfUdpExporter struct {
@@ -48,7 +47,6 @@ func (e *gelfUdpExporter) start(ctx context.Context, host component.Host) error 
 func (e *gelfUdpExporter) handleLogRecord(lr plog.LogRecord) *gelf.Message {
 	//@TODO: Host should be constructed from the record
 	//@TODO: Full message implementation
-	//@TODO: TimeUnix from ObservedTimestamp if Timestamp is not set
 	//@TODO: Attributes should be written as additional fields
 
 	return &gelf.Message{
@@ -56,7 +54,7 @@ func (e *gelfUdpExporter) handleLogRecord(lr plog.LogRecord) *gelf.Message {
 		Host:     "TODO",
 		Short:    lr.Body().AsString(),
 		Full:     "TODO",
-		TimeUnix: float64(lr.Timestamp()) / float64(time.Second),
+		TimeUnix: helpers.OtelTimestampToGelfTimeUnix(lr.Timestamp(), lr.ObservedTimestamp()),
 		Level:    helpers.OtelSeverityToSyslogLevel(int32(lr.SeverityNumber())),
 		Facility: "",
 		Extra: map[string]interface{}{

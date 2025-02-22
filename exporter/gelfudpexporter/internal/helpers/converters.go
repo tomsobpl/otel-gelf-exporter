@@ -1,5 +1,10 @@
 package helpers
 
+import (
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"time"
+)
+
 // OtelSeverityToSyslogLevel maps OpenTelemetry severity number to Syslog level.
 func OtelSeverityToSyslogLevel(severityNumber int32) int32 {
 	/*
@@ -38,4 +43,12 @@ func OtelSeverityToSyslogLevel(severityNumber int32) int32 {
 	}
 
 	return 7 // DEBUG
+}
+
+// OtelTimestampToGelfTimeUnix converts OpenTelemetry timestamp to GELF TimeUnix.
+func OtelTimestampToGelfTimeUnix(timestamp pcommon.Timestamp, observedTimestamp pcommon.Timestamp) float64 {
+	if timestamp != 0 {
+		return float64(timestamp) / float64(time.Second)
+	}
+	return float64(observedTimestamp) / float64(time.Second)
 }
