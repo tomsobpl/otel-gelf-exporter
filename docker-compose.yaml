@@ -1,17 +1,7 @@
 services:
-  data_producer:
-    build:
-      context: ".docker/data_producer"
-      dockerfile: "Dockerfile"
-    environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: "otel_collector:4317"
-      OTEL_EXPORTER_OTLP_INSECURE: "true"
-      OTEL_SERVICE_NAME: "data_producer"
-    stdin_open: true
-    stop_grace_period: "1s"
-    tty: true
-    volumes:
-      - ".docker/data_producer:/usr/src/app"
+  data_otelgen:
+    image: "ghcr.io/krzko/otelgen:latest"
+    command: "--insecure --otel-exporter-otlp-endpoint otel_collector:4317 logs multi"
 
   graylog_datanode:
     image: "${DATANODE_IMAGE:-graylog/graylog-datanode:6.1}"
