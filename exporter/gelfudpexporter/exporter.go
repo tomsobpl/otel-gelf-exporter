@@ -45,13 +45,11 @@ func (e *gelfUdpExporter) start(ctx context.Context, host component.Host) error 
 }
 
 func (e *gelfUdpExporter) handleLogRecord(lr plog.LogRecord) *gelf.Message {
-	//@TODO: Full message implementation
-
 	m := &gelf.Message{
 		Version:  "1.1",
 		Host:     "UNKNOWN",
 		Short:    lr.Body().AsString(),
-		Full:     "TODO",
+		Full:     "",
 		TimeUnix: helpers.OtelTimestampToGelfTimeUnix(lr.Timestamp(), lr.ObservedTimestamp()),
 		Level:    helpers.OtelSeverityToSyslogLevel(int32(lr.SeverityNumber())),
 		Facility: "",
