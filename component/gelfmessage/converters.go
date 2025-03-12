@@ -1,18 +1,19 @@
-package helpers
+package gelfmessage
 
 import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
-	"gopkg.in/Graylog2/go-gelf.v2/gelf"
 	"time"
 )
 
 // OtelAttributesToGelfExtra converts OpenTelemetry attributes to GELF extra fields.
-func OtelAttributesToGelfExtra(attributes pcommon.Map, message *gelf.Message) {
-	OtelAttributesToGelfExtraWithPrefix(attributes, message, "")
+func OtelAttributesToGelfExtra(attributes pcommon.Map) map[string]interface{} {
+	return OtelAttributesToGelfExtraWithPrefix(attributes, "")
 }
 
 // OtelAttributesToGelfExtraWithPrefix converts OpenTelemetry attributes to GELF extra fields with a prefix.
-func OtelAttributesToGelfExtraWithPrefix(attributes pcommon.Map, message *gelf.Message, prefix string) {
+func OtelAttributesToGelfExtraWithPrefix(attributes pcommon.Map, prefix string) map[string]interface{} {
+	fields := make(map[string]interface{})
+
 	attributes.Range(func(k string, v pcommon.Value) bool {
 		if prefix != "" {
 			k = prefix + "." + k
@@ -24,11 +25,13 @@ func OtelAttributesToGelfExtraWithPrefix(attributes pcommon.Map, message *gelf.M
 		case pcommon.ValueTypeSlice:
 			//@TODO Handle slices if needed
 		default:
-			message.Extra[k] = v.AsString()
+			fields[k] = v.AsString()
 		}
 
 		return true
 	})
+
+	return fields
 }
 
 // OtelSeverityToSyslogLevel maps OpenTelemetry severity number to Syslog level.

@@ -7,6 +7,7 @@ WORKDIR /build
 RUN go install go.opentelemetry.io/collector/cmd/builder@v${OTEL_VERSION}
 
 COPY .docker/otel_collector/config-builder.yaml .
+COPY ./exporter/gelftcpexporter ./gelftcpexporter
 COPY ./exporter/gelfudpexporter ./gelfudpexporter
 RUN CGO_ENABLED=0 builder --config=config-builder.yaml
 

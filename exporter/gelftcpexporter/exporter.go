@@ -1,4 +1,4 @@
-package gelfudpexporter
+package gelftcpexporter
 
 import (
 	"context"
@@ -11,32 +11,32 @@ import (
 	"gopkg.in/Graylog2/go-gelf.v2/gelf"
 )
 
-type gelfUdpExporter struct {
+type gelfTcpExporter struct {
 	config         *Config
 	logger         *zap.Logger
 	messageFactory *gelfmessage.Factory
-	writer         *gelf.UDPWriter
+	writer         *gelf.TCPWriter
 }
 
-func newGelfUdpExporter(cfg component.Config, set exporter.Settings) *gelfUdpExporter {
+func newGelfTcpExporter(cfg component.Config, set exporter.Settings) *gelfTcpExporter {
 	c := cfg.(*Config)
 
-	return &gelfUdpExporter{
+	return &gelfTcpExporter{
 		config:         c,
 		logger:         set.Logger,
 		messageFactory: gelfmessage.NewFactory(set.Logger),
 	}
 }
 
-func (e *gelfUdpExporter) initGelfWriter() bool {
+func (e *gelfTcpExporter) initGelfWriter() bool {
 	e.logger.Info(fmt.Sprintf("Initializing GELF writer for endpoint %s", e.config.Endpoint))
-	w, _ := gelf.NewUDPWriter(e.config.Endpoint)
+	w, _ := gelf.NewTCPWriter(e.config.Endpoint)
 	e.writer = w
 
 	return e.writer != nil
 }
 
-func (e *gelfUdpExporter) start(ctx context.Context, host component.Host) error {
+func (e *gelfTcpExporter) start(ctx context.Context, host component.Host) error {
 	e.logger.Info("Starting Graylog exporter")
 
 	if !e.initGelfWriter() {
@@ -46,10 +46,11 @@ func (e *gelfUdpExporter) start(ctx context.Context, host component.Host) error 
 	return nil
 }
 
-func (e *gelfUdpExporter) pushLogs(_ context.Context, ld plog.Logs) error {
+func (e *gelfTcpExporter) pushLogs(_ context.Context, ld plog.Logs) error {
 	e.logger.Info(fmt.Sprintf("Processing %d resource log(s) with %d log record(s)", ld.ResourceLogs(), ld.LogRecordCount()))
 
 	for _, m := range e.messageFactory.BuildMessagesFromOtelLogsData(ld) {
+		//@TODO: Target connection should be checked before writing
 		//@TODO: Target should be refreshed if setup in config to allow for load balancing usage
 
 		err := e.writer.WriteMessage(m.GetRawMessage())

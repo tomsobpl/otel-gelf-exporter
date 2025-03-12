@@ -1,4 +1,4 @@
-module github.com/tomsobpl/otel-collector-graylog/exporter/gelfudpexporter
+module github.com/tomsobpl/otel-collector-graylog/exporter/gelftcpexporter
 
 go 1.23.0
 
