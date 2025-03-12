@@ -1,11 +1,14 @@
 module github.com/tomsobpl/otel-collector-graylog/exporter/gelfudpexporter
 
-go 1.22.0
+go 1.23.0
+
+toolchain go1.23.7
 
 require (
+	github.com/tomsobpl/otel-collector-graylog/component/gelfmessage v0.0.0-20250312220741-00c68009a94d
 	go.opentelemetry.io/collector/component v0.119.0
 	go.opentelemetry.io/collector/exporter v0.119.0
-	go.opentelemetry.io/collector/pdata v1.25.0
+	go.opentelemetry.io/collector/pdata v1.27.0
 )
 
 require (
