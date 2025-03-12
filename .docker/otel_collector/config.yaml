@@ -8,10 +8,12 @@ receivers:
 exporters:
   debug:
     verbosity: detailed
+  gelftcp:
+    endpoint: ${env:OTEL_EXPORTER_GELF_TCP_ENDPOINT}
   gelfudp:
     endpoint: ${env:OTEL_EXPORTER_GELF_UDP_ENDPOINT}
 service:
   pipelines:
     logs:
       receivers: [otlp]
-      exporters: [debug, gelfudp]
+      exporters: [debug, gelftcp, gelfudp]
