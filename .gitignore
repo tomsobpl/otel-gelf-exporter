@@ -1,6 +1,3 @@
 .idea
 
-build/*
-!build/.gitkeep
-
 docker-compose.override.yaml

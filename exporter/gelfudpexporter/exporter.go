@@ -3,12 +3,12 @@ package gelfudpexporter
 import (
 	"context"
 	"fmt"
+	"github.com/tomsobpl/otel-collector-graylog/exporter/gelfudpexporter/internal/helpers"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.uber.org/zap"
 	"gopkg.in/Graylog2/go-gelf.v2/gelf"
-	"time"
 )
 
 type gelfUdpExporter struct {
@@ -45,29 +45,30 @@ func (e *gelfUdpExporter) start(ctx context.Context, host component.Host) error 
 }
 
 func (e *gelfUdpExporter) handleLogRecord(lr plog.LogRecord) *gelf.Message {
-	//@TODO: Host should be constructed from the record
 	//@TODO: Full message implementation
-	//@TODO: TimeUnix from ObservedTimestamp if Timestamp is not set
-	//@TODO: SeverityNumber should be mapped into GELF/Syslog levels
-	//@TODO: Attributes should be written as additional fields
 
-	return &gelf.Message{
+	m := &gelf.Message{
 		Version:  "1.1",
-		Host:     "TODO",
+		Host:     "UNKNOWN",
 		Short:    lr.Body().AsString(),
 		Full:     "TODO",
-		TimeUnix: float64(lr.Timestamp()) / float64(time.Second),
-		Level:    int32(lr.SeverityNumber()),
+		TimeUnix: helpers.OtelTimestampToGelfTimeUnix(lr.Timestamp(), lr.ObservedTimestamp()),
+		Level:    helpers.OtelSeverityToSyslogLevel(int32(lr.SeverityNumber())),
 		Facility: "",
 		Extra: map[string]interface{}{
 			"otel_log_dropped_attributes_count": lr.DroppedAttributesCount(),
 			"otel_log_event_name":               lr.EventName(),
+			"otel_log_severity_number":          lr.SeverityNumber(),
 			"otel_log_severity_text":            lr.SeverityText(),
 			"otel_log_span_id":                  lr.SpanID().String(),
 			"otel_log_trace_id":                 lr.TraceID().String(),
 		},
 		RawExtra: nil,
 	}
+
+	helpers.OtelAttributesToGelfExtra(lr.Attributes(), m)
+
+	return m
 }
 
 func (e *gelfUdpExporter) handleScopeLog(sl plog.ScopeLogs) []*gelf.Message {
@@ -77,12 +78,11 @@ func (e *gelfUdpExporter) handleScopeLog(sl plog.ScopeLogs) []*gelf.Message {
 		msgs = append(msgs, e.handleLogRecord(sl.LogRecords().At(i)))
 	}
 
-	//@TODO: Attributes should be written as additional fields
-
 	for _, m := range msgs {
 		m.Extra["otel_scope_dropped_attributes_count"] = sl.Scope().DroppedAttributesCount()
 		m.Extra["otel_scope_name"] = sl.Scope().Name()
 		m.Extra["otel_scope_version"] = sl.Scope().Version()
+		helpers.OtelAttributesToGelfExtraWithPrefix(sl.Scope().Attributes(), m, "scope")
 	}
 
 	return msgs
@@ -95,10 +95,15 @@ func (e *gelfUdpExporter) handleResourceLog(rl plog.ResourceLogs) []*gelf.Messag
 		msgs = append(msgs, e.handleScopeLog(rl.ScopeLogs().At(i))...)
 	}
 
-	//@TODO: Attributes should be written as additional fields
-
 	for _, m := range msgs {
 		m.Extra["otel_resource_dropped_attributes_count"] = rl.Resource().DroppedAttributesCount()
+		helpers.OtelAttributesToGelfExtraWithPrefix(rl.Resource().Attributes(), m, "resource")
+
+		host, hostExist := rl.Resource().Attributes().Get("host.name")
+
+		if hostExist {
+			m.Host = host.AsString()
+		}
 	}
 
 	return msgs
