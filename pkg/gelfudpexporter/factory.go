@@ -6,7 +6,7 @@ import (
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 
-	"github.com/tomsobpl/otel-collector-graylog/exporter/gelfudpexporter/internal/metadata"
+	"github.com/tomsobpl/otel-gelf-exporter/pkg/gelfudpexporter/internal/metadata"
 )
 
 func NewFactory() exporter.Factory {

@@ -6,7 +6,7 @@ import (
 
 var (
 	Type      = component.MustNewType("gelfudp")
-	ScopeName = "github.com/tomsobpl/otel-collector-graylog/exporter/gelfudpexporter"
+	ScopeName = "github.com/tomsobpl/otel-gelf-exporter/pkg/gelfudpexporter"
 )
 
 const (

@@ -5,9 +5,9 @@ dist:
   debug_compilation: true
 exporters:
   - gomod: go.opentelemetry.io/collector/exporter/debugexporter v0.119.0
-  - gomod: github.com/tomsobpl/otel-collector-graylog/exporter/gelftcpexporter 15af17e
+  - gomod: github.com/tomsobpl/otel-gelf-exporter/pkg/gelftcpexporter main
     path: ./gelftcpexporter
-  - gomod: github.com/tomsobpl/otel-collector-graylog/exporter/gelfudpexporter main
+  - gomod: github.com/tomsobpl/otel-gelf-exporter/pkg/gelfudpexporter main
     path: ./gelfudpexporter
 receivers:
   - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.119.0
