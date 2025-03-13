@@ -1,2 +1,2 @@
-# otel-collector-graylog
-OpenTelemetry Collector components for Graylog
+# otel-gelf-exporter
+OpenTelemetry Collector exporters for GELF
