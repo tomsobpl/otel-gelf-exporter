@@ -1,4 +1,4 @@
-module github.com/tomsobpl/otel-gelf-exporter
+module github.com/tomsobpl/otel-gelf-exporter/pkg
 
 go 1.23.0
 
