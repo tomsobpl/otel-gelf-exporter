@@ -3,7 +3,8 @@ package gelftcpexporter
 import (
 	"context"
 	"fmt"
-	"github.com/tomsobpl/otel-collector-graylog/component/gelfmessage"
+	ogc "github.com/tomsobpl/otel-gelf-converter/pkg"
+	ogcfactory "github.com/tomsobpl/otel-gelf-converter/pkg/factory"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -14,7 +15,7 @@ import (
 type gelfTcpExporter struct {
 	config         *Config
 	logger         *zap.Logger
-	messageFactory *gelfmessage.Factory
+	messageFactory *ogcfactory.Factory
 	writer         *gelf.TCPWriter
 }
 
@@ -24,7 +25,7 @@ func newGelfTcpExporter(cfg component.Config, set exporter.Settings) *gelfTcpExp
 	return &gelfTcpExporter{
 		config:         c,
 		logger:         set.Logger,
-		messageFactory: gelfmessage.NewFactory(set.Logger),
+		messageFactory: ogc.CreateFactory(set.Logger),
 	}
 }
 
@@ -49,7 +50,7 @@ func (e *gelfTcpExporter) start(ctx context.Context, host component.Host) error 
 func (e *gelfTcpExporter) pushLogs(_ context.Context, ld plog.Logs) error {
 	e.logger.Info(fmt.Sprintf("Processing %d resource log(s) with %d log record(s)", ld.ResourceLogs(), ld.LogRecordCount()))
 
-	for _, m := range e.messageFactory.BuildMessagesFromOtelLogsData(ld) {
+	for _, m := range e.messageFactory.FromOtelLogsData(ld) {
 		//@TODO: Target connection should be checked before writing
 		//@TODO: Target should be refreshed if setup in config to allow for load balancing usage
 
