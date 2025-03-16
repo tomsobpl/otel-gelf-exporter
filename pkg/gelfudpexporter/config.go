@@ -12,12 +12,22 @@ const (
 )
 
 type Config struct {
-	Endpoint                string `mapstructure:"endpoint"`
-	EndpointRefreshInterval int64  `mapstructure:"endpoint_refresh_interval"`
+	// Endpoint is the address of the GELF input.
+	Endpoint string `mapstructure:"endpoint"`
+
+	// EndpointRefreshInterval is the interval in seconds between endpoint refreshes.
+	// Default value is 60.
+	// This is only used when EndpointRefreshStrategy is set to "interval".
+	EndpointRefreshInterval int64 `mapstructure:"endpoint_refresh_interval"`
+
+	// EndpointRefreshStrategy is the strategy used to refresh the endpoint.
+	// Possible values are "none", "interval" and "perChunk".
+	// Default value is "none".
+	// "none" means that the endpoint is not refreshed.
+	// "interval" means that the endpoint is refreshed every EndpointRefreshInterval seconds.
+	// "perChunk" means that the endpoint is refreshed for every chunk of logs.
 	EndpointRefreshStrategy string `mapstructure:"endpoint_refresh_strategy"`
 }
-
-//var _ component.Config = (*Config)(nil)
 
 func (cfg *Config) Validate() error {
 	if cfg.Endpoint == "" {
