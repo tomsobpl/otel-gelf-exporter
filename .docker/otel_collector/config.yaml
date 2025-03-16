@@ -12,6 +12,7 @@ exporters:
     endpoint: ${env:OTEL_EXPORTER_GELF_TCP_ENDPOINT}
   gelfudp:
     endpoint: ${env:OTEL_EXPORTER_GELF_UDP_ENDPOINT}
+    endpoint_refresh_strategy: perChunk
 service:
   pipelines:
     logs:

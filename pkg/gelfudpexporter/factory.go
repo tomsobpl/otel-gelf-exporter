@@ -22,6 +22,8 @@ func createLogsExporter(
 	set exporter.Settings,
 	cfg component.Config) (exporter.Logs, error) {
 
+	//cfg = cfg.(*Config)
+
 	e := newGelfUdpExporter(cfg, set)
 	//cfg, ok := cfg.(*Config)
 
