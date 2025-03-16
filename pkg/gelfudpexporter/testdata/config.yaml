@@ -1,0 +1,12 @@
+gelfudp:
+  endpoint: "localhost:12201"
+gelfudp/perchunk:
+  endpoint: "localhost:12201"
+  endpoint_refresh_strategy: "perChunk"
+gelfudp/interval:
+  endpoint: "localhost:12201"
+  endpoint_refresh_strategy: "interval"
+gelfudp/interval15:
+  endpoint: "localhost:12201"
+  endpoint_refresh_interval: 15
+  endpoint_refresh_strategy: "interval"

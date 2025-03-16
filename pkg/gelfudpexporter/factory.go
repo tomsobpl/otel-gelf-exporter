@@ -21,13 +21,7 @@ func createLogsExporter(
 	ctx context.Context,
 	set exporter.Settings,
 	cfg component.Config) (exporter.Logs, error) {
-
 	e := newGelfUdpExporter(cfg, set)
-	//cfg, ok := cfg.(*Config)
-
-	//if !ok {
-	//	return nil, errors.New("invalid configuration type")
-	//}
 
 	return exporterhelper.NewLogs(ctx, set, cfg, e.pushLogs, exporterhelper.WithStart(e.start))
 }

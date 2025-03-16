@@ -12,8 +12,14 @@ exporters:
     endpoint: ${env:OTEL_EXPORTER_GELF_TCP_ENDPOINT}
   gelfudp:
     endpoint: ${env:OTEL_EXPORTER_GELF_UDP_ENDPOINT}
+    endpoint_refresh_interval: 15
+    endpoint_refresh_strategy: interval
 service:
   pipelines:
     logs:
       receivers: [otlp]
-      exporters: [debug, gelftcp, gelfudp]
+      exporters: [gelftcp, gelfudp]
+  telemetry:
+    logs:
+      level: "DEBUG"
+      development: true
