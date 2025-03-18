@@ -5,18 +5,17 @@ import (
 	"fmt"
 	ogc "github.com/tomsobpl/otel-gelf-converter/pkg"
 	ogcfactory "github.com/tomsobpl/otel-gelf-converter/pkg/factory"
+	"github.com/tomsobpl/otel-gelf-exporter/pkg/gelfexporter"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.uber.org/zap"
 	"gopkg.in/Graylog2/go-gelf.v2/gelf"
-	"net"
-	"strings"
 	"time"
 )
 
 type gelfUdpExporter struct {
-	config                    *Config
+	config                    *gelfexporter.Config
 	logger                    *zap.Logger
 	messageFactory            *ogcfactory.Factory
 	writer                    *gelf.UDPWriter
@@ -26,7 +25,7 @@ type gelfUdpExporter struct {
 
 func newGelfUdpExporter(cfg component.Config, set exporter.Settings) *gelfUdpExporter {
 	return &gelfUdpExporter{
-		config:         cfg.(*Config),
+		config:         cfg.(*gelfexporter.Config),
 		logger:         set.Logger,
 		messageFactory: ogc.CreateFactory(set.Logger),
 	}
@@ -54,8 +53,8 @@ func (e *gelfUdpExporter) initGelfWriter() bool {
 	return e.writer != nil
 }
 
-func (e *gelfUdpExporter) start(ctx context.Context, host component.Host) error {
-	e.logger.Info("Starting Graylog exporter")
+func (e *gelfUdpExporter) start(_ context.Context, _ component.Host) error {
+	e.logger.Info("Starting GELF UDP exporter")
 
 	if !e.initGelfWriter() {
 		e.logger.Error("Failed to initialize GELF writer")
@@ -67,13 +66,13 @@ func (e *gelfUdpExporter) start(ctx context.Context, host component.Host) error 
 func (e *gelfUdpExporter) pushLogs(_ context.Context, ld plog.Logs) error {
 	e.logger.Info(fmt.Sprintf("Processing %d resource log(s) with %d log record(s)", ld.ResourceLogs().Len(), ld.LogRecordCount()))
 
-	if e.config.EndpointRefreshStrategy == EndpointRefreshStrategyInterval && e.endpointRefreshIntervalExpired() {
+	if e.config.EndpointRefreshStrategy == gelfexporter.EndpointRefreshStrategyInterval && e.endpointRefreshIntervalExpired() {
 		e.logger.Debug(fmt.Sprintf("Refreshing writer endpoint due to '%s' strategy", e.config.EndpointRefreshStrategy))
 		e.initGelfWriter()
 	}
 
 	for _, m := range e.messageFactory.FromOtelLogsData(ld) {
-		if e.config.EndpointRefreshStrategy == EndpointRefreshStrategyPerchunk {
+		if e.config.EndpointRefreshStrategy == gelfexporter.EndpointRefreshStrategyPerMessage {
 			e.logger.Debug(fmt.Sprintf("Refreshing writer endpoint due to '%s' strategy", e.config.EndpointRefreshStrategy))
 			e.initGelfWriter()
 		}
@@ -93,33 +92,15 @@ func (e *gelfUdpExporter) endpointRefreshIntervalExpired() bool {
 }
 
 func (e *gelfUdpExporter) resolveWriterEndpoint() error {
-	host := e.config.Endpoint
-	port := ""
+	endpoint, err := gelfexporter.ResolveEndpoint(e.config.Endpoint)
 
-	if strings.LastIndexByte(e.config.Endpoint, ':') != -1 {
-		h, p, err := net.SplitHostPort(e.config.Endpoint)
-
-		if err != nil {
-			return err
-		}
-
-		host = h
-		port = p
-	}
-
-	ips, err := net.LookupIP(host)
-
-	if err != nil || ips == nil || len(ips) == 0 {
+	if err != nil {
 		return err
 	}
 
-	if port != "" {
-		e.writerEndpoint = net.JoinHostPort(ips[0].String(), port)
-	} else {
-		e.writerEndpoint = ips[0].String()
-	}
-
+	e.writerEndpoint = endpoint
 	e.writerEndpointRefreshTime = time.Now().Unix()
+
 	e.logger.Debug(fmt.Sprintf("Resolved Endpoint %s into %s", e.config.Endpoint, e.writerEndpoint))
 
 	return nil

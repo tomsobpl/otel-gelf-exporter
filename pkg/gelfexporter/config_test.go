@@ -1,9 +1,8 @@
-package gelfudpexporter
+package gelfexporter
 
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tomsobpl/otel-gelf-exporter/pkg/gelfudpexporter/internal/metadata"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/confmap/confmaptest"
 	"go.opentelemetry.io/collector/confmap/xconfmap"
@@ -19,7 +18,7 @@ func TestConfigLoading(t *testing.T) {
 		expected component.Config
 	}{
 		{
-			id: component.NewIDWithName(metadata.Type, ""),
+			id: component.NewIDWithName(component.MustNewType(UdpExporterType), ""),
 			expected: &Config{
 				Endpoint:                "localhost:12201",
 				EndpointRefreshInterval: 60,
@@ -27,15 +26,15 @@ func TestConfigLoading(t *testing.T) {
 			},
 		},
 		{
-			id: component.NewIDWithName(metadata.Type, "perchunk"),
+			id: component.NewIDWithName(component.MustNewType(UdpExporterType), "permessage"),
 			expected: &Config{
 				Endpoint:                "localhost:12201",
 				EndpointRefreshInterval: 60,
-				EndpointRefreshStrategy: EndpointRefreshStrategyPerchunk,
+				EndpointRefreshStrategy: EndpointRefreshStrategyPerMessage,
 			},
 		},
 		{
-			id: component.NewIDWithName(metadata.Type, "interval"),
+			id: component.NewIDWithName(component.MustNewType(UdpExporterType), "interval"),
 			expected: &Config{
 				Endpoint:                "localhost:12201",
 				EndpointRefreshInterval: 60,
@@ -43,7 +42,7 @@ func TestConfigLoading(t *testing.T) {
 			},
 		},
 		{
-			id: component.NewIDWithName(metadata.Type, "interval15"),
+			id: component.NewIDWithName(component.MustNewType(UdpExporterType), "interval15"),
 			expected: &Config{
 				Endpoint:                "localhost:12201",
 				EndpointRefreshInterval: 15,
@@ -54,8 +53,7 @@ func TestConfigLoading(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.id.String(), func(t *testing.T) {
-			factory := NewFactory()
-			cfg := factory.CreateDefaultConfig()
+			cfg := CreateDefaultConfig()
 
 			sub, err := cm.Sub(tt.id.String())
 			require.NoError(t, err)
@@ -76,15 +74,15 @@ func TestConfigValidation(t *testing.T) {
 		{
 			name: "NoEndpoint",
 			cfg: func() *Config {
-				cfg := createDefaultConfig().(*Config)
+				cfg := CreateDefaultConfig().(*Config)
 				return cfg
 			}(),
-			wantErr: "graylog UDP endpoint must be specified",
+			wantErr: "GELF input endpoint must be specified",
 		},
 		{
 			name: "InvalidEndpointRefreshStrategy",
 			cfg: func() *Config {
-				cfg := createDefaultConfig().(*Config)
+				cfg := CreateDefaultConfig().(*Config)
 				cfg.Endpoint = "localhost:12201"
 				cfg.EndpointRefreshStrategy = "invalid"
 				return cfg
@@ -94,7 +92,7 @@ func TestConfigValidation(t *testing.T) {
 		{
 			name: "Success",
 			cfg: func() *Config {
-				cfg := createDefaultConfig().(*Config)
+				cfg := CreateDefaultConfig().(*Config)
 				cfg.Endpoint = "localhost:12201"
 				return cfg
 			}(),
