@@ -1,8 +1,8 @@
 gelfudp:
   endpoint: "localhost:12201"
-gelfudp/perchunk:
+gelfudp/permessage:
   endpoint: "localhost:12201"
-  endpoint_refresh_strategy: "perChunk"
+  endpoint_refresh_strategy: "perMessage"
 gelfudp/interval:
   endpoint: "localhost:12201"
   endpoint_refresh_strategy: "interval"

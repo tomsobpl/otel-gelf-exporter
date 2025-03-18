@@ -1,4 +1,4 @@
-package gelfudpexporter
+package gelfexporter
 
 import (
 	"errors"
@@ -6,9 +6,11 @@ import (
 )
 
 const (
-	EndpointRefreshStrategyDefault  string = "none"
-	EndpointRefreshStrategyInterval string = "interval"
-	EndpointRefreshStrategyPerchunk string = "perChunk"
+	EndpointRefreshStrategyDefault    string = "none"
+	EndpointRefreshStrategyInterval   string = "interval"
+	EndpointRefreshStrategyPerMessage string = "perMessage"
+	TcpExporterType                   string = "gelftcp"
+	UdpExporterType                   string = "gelfudp"
 )
 
 type Config struct {
@@ -21,21 +23,21 @@ type Config struct {
 	EndpointRefreshInterval int64 `mapstructure:"endpoint_refresh_interval"`
 
 	// EndpointRefreshStrategy is the strategy used to refresh the endpoint.
-	// Possible values are "none", "interval" and "perChunk".
+	// Possible values are "none", "interval" and "perMessage".
 	// Default value is "none".
 	// "none" means that the endpoint is not refreshed.
 	// "interval" means that the endpoint is refreshed every EndpointRefreshInterval seconds.
-	// "perChunk" means that the endpoint is refreshed for every chunk of logs.
+	// "perMessage" means that the endpoint is refreshed for every log message.
 	EndpointRefreshStrategy string `mapstructure:"endpoint_refresh_strategy"`
 }
 
 func (cfg *Config) Validate() error {
 	if cfg.Endpoint == "" {
-		return errors.New("graylog UDP endpoint must be specified")
+		return errors.New("GELF input endpoint must be specified")
 	}
 
 	switch cfg.EndpointRefreshStrategy {
-	case EndpointRefreshStrategyDefault, EndpointRefreshStrategyInterval, EndpointRefreshStrategyPerchunk:
+	case EndpointRefreshStrategyDefault, EndpointRefreshStrategyInterval, EndpointRefreshStrategyPerMessage:
 		break
 	default:
 		return errors.New("invalid endpoint refresh strategy")
@@ -44,7 +46,8 @@ func (cfg *Config) Validate() error {
 	return nil
 }
 
-func createDefaultConfig() component.Config {
+// CreateDefaultConfig creates the default configuration for the exporter.
+func CreateDefaultConfig() component.Config {
 	return &Config{
 		EndpointRefreshInterval: 60,
 		EndpointRefreshStrategy: EndpointRefreshStrategyDefault,
