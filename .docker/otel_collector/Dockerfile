@@ -1,7 +1,7 @@
 # Stage 1: Builder
 FROM golang:1.23-bookworm AS builder
 
-ARG OTEL_VERSION=0.119.0
+ARG OTEL_VERSION=0.122.0
 
 WORKDIR /build
 RUN go install go.opentelemetry.io/collector/cmd/builder@v${OTEL_VERSION}
