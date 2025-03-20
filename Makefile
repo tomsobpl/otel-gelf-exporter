@@ -26,4 +26,4 @@ rebuild_otel_collector: # Rebuild otel_collector service
 	${dc} up --detach --remove-orphans otel_collector data_otelgen
 
 restart_otel_collector: # Restart otel_collector service
-	${dc} restart otel_collector
+	${dc} restart otel_collector data_otelgen

@@ -1,0 +1,5 @@
+package gelftcpexporter
+
+func tlsEndpoint() {
+
+}
