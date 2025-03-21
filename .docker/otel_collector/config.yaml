@@ -14,9 +14,11 @@ exporters:
       enabled: false
   gelftcp/tls:
     endpoint: ${env:OTEL_EXPORTER_GELF_TLS_ENDPOINT}
+    endpoint_refresh_interval: 120
+    endpoint_refresh_strategy: interval
   gelfudp:
     endpoint: ${env:OTEL_EXPORTER_GELF_UDP_ENDPOINT}
-    endpoint_refresh_interval: 15
+    endpoint_refresh_interval: 120
     endpoint_refresh_strategy: interval
 service:
   pipelines:

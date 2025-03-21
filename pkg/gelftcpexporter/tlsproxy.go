@@ -1,5 +1,0 @@
-package gelftcpexporter
-
-func tlsEndpoint() {
-
-}

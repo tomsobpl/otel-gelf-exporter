@@ -1,0 +1,6 @@
+gelftcp:
+  endpoint: "localhost:12201"
+gelftcp/insecure:
+  endpoint: "localhost:12201"
+  endpoint_tls:
+    enabled: false

@@ -1,10 +1,13 @@
 package gelftcpexporter
 
-import "github.com/tomsobpl/otel-gelf-exporter/pkg/gelfexporter"
+import (
+	"github.com/tomsobpl/otel-gelf-exporter/pkg/gelfexporter"
+	"go.opentelemetry.io/collector/component"
+)
 
 type Config struct {
-	gelfexporter.Config
-	EndpointTLS EndpointTLS `mapstructure:"endpoint_tls"`
+	gelfexporter.Config `mapstructure:",squash"`
+	EndpointTLS         EndpointTLS `mapstructure:"endpoint_tls"`
 }
 
 type EndpointTLS struct {
@@ -13,7 +16,7 @@ type EndpointTLS struct {
 	Enabled bool `mapstructure:"enabled"`
 }
 
-func CreateDefaultConfig() *Config {
+func CreateDefaultConfig() component.Config {
 	return &Config{
 		Config: *gelfexporter.CreateDefaultConfig().(*gelfexporter.Config),
 		EndpointTLS: EndpointTLS{

@@ -2,7 +2,6 @@ package gelftcpexporter
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	ogc "github.com/tomsobpl/otel-gelf-converter/pkg"
 	ogcfactory "github.com/tomsobpl/otel-gelf-converter/pkg/factory"
@@ -12,7 +11,6 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.uber.org/zap"
 	"gopkg.in/Graylog2/go-gelf.v2/gelf"
-	"net"
 	"time"
 )
 
@@ -23,8 +21,7 @@ type gelfTcpExporter struct {
 	writer                    *gelf.TCPWriter
 	writerEndpoint            string
 	writerEndpointRefreshTime int64
-	writerTLSConnection       net.Conn
-	writerTLSListener         net.Listener
+	writerTLSGateway          *TLSGateway
 }
 
 func newGelfTcpExporter(cfg component.Config, set exporter.Settings) *gelfTcpExporter {
@@ -49,28 +46,36 @@ func (e *gelfTcpExporter) initGelfWriter() bool {
 	writerEndpoint := e.writerEndpoint
 
 	if e.config.EndpointTLS.Enabled {
-		writerEndpoint = e.writerTLSListener.Addr().String()
+		e.logger.Info("Starting GELF TCP exporter TLS Proxy")
 
-		conf := &tls.Config{
-			InsecureSkipVerify: true,
-		}
-
-		var conn net.Conn
-		conn, err = tls.Dial("tcp", writerEndpoint, conf)
+		srcEndpoint := TLSGatewayEndpoint{Network: "tcp", Endpoint: "127.0.0.1:"}
+		dstEndpoint := TLSGatewayEndpoint{Network: "tcp", Endpoint: writerEndpoint}
+		gateway, err := NewTLSGateway(srcEndpoint, dstEndpoint)
 
 		if err != nil {
-			e.logger.Error("Failed to initialize TLS proxy connection")
+			e.logger.Error("Failed to start local listener")
 			e.logger.Error(err.Error())
 			return false
 		}
 
-		defer func() {
-			if err := conn.Close(); err != nil {
-				e.logger.Error(err.Error())
-			}
-		}()
+		writerEndpoint = gateway.Addr().String()
+		e.logger.Debug(fmt.Sprintf("Started local listener on %s", writerEndpoint))
 
-		e.writerTLSConnection = conn
+		//var wg sync.WaitGroup
+		//
+		//wg.Add(1)
+		//go gateway.Run(&wg)
+		gateway.Start()
+
+		//e.logger.Debug("Waiting for TLSGateway to be ready")
+		//wg.Wait()
+
+		if e.writerTLSGateway != nil {
+			e.logger.Debug("Shutting down previous TLSGateway")
+			e.writerTLSGateway.Shutdown()
+		}
+
+		e.writerTLSGateway = gateway
 	}
 
 	e.writer, err = gelf.NewTCPWriter(writerEndpoint)
@@ -87,75 +92,11 @@ func (e *gelfTcpExporter) initGelfWriter() bool {
 func (e *gelfTcpExporter) start(_ context.Context, _ component.Host) error {
 	e.logger.Info("Starting GELF TCP exporter")
 
-	if e.config.EndpointTLS.Enabled {
-		e.logger.Info("Starting GELF TCP exporter TLS Proxy")
-		listener, err := e.startTLSProxyListener()
-
-		if err != nil {
-			e.logger.Error("Failed to start local listener")
-			e.logger.Error(err.Error())
-		}
-
-		e.writerTLSListener = listener
-		go e.serveTLSProxy()
-	}
-
 	if !e.initGelfWriter() {
 		e.logger.Error("Failed to initialize GELF writer")
 	}
 
 	return nil
-}
-
-func (e *gelfTcpExporter) startTLSProxyListener() (net.Listener, error) {
-	listener, err := net.Listen("tcp4", "127.0.0.1")
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() {
-		if err := listener.Close(); err != nil {
-			e.logger.Error(err.Error())
-		}
-	}()
-
-	e.logger.Debug(fmt.Sprintf("Listening on %s", listener.Addr()))
-
-	return listener, nil
-}
-
-func (e *gelfTcpExporter) serveTLSProxy() {
-	conn, err := e.writerTLSListener.Accept()
-
-	if err != nil {
-		e.logger.Error(err.Error())
-		return
-	}
-
-	go forwardConnViaTLS(conn, e.writerTLSConnection)
-}
-
-func forwardConnViaTLS(src net.Conn, dst net.Conn) {
-	srcChannel := connectionIntoChannel(src)
-	dstChannel := connectionIntoChannel(dst)
-
-	for {
-		select {
-		case b1 := <-srcChannel:
-			if b1 == nil {
-				return
-			} else {
-				dst.Write(b1)
-			}
-		case b2 := <-dstChannel:
-			if b2 == nil {
-				return
-			} else {
-				src.Write(b2)
-			}
-		}
-	}
 }
 
 func (e *gelfTcpExporter) pushLogs(_ context.Context, ld plog.Logs) error {
