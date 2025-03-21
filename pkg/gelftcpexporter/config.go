@@ -4,7 +4,7 @@ import "github.com/tomsobpl/otel-gelf-exporter/pkg/gelfexporter"
 
 type Config struct {
 	gelfexporter.Config
-	EndpointTLS *EndpointTLS `mapstructure:"endpoint_tls"`
+	EndpointTLS EndpointTLS `mapstructure:"endpoint_tls"`
 }
 
 type EndpointTLS struct {
@@ -16,7 +16,7 @@ type EndpointTLS struct {
 func CreateDefaultConfig() *Config {
 	return &Config{
 		Config: *gelfexporter.CreateDefaultConfig().(*gelfexporter.Config),
-		EndpointTLS: &EndpointTLS{
+		EndpointTLS: EndpointTLS{
 			Enabled: true,
 		},
 	}
