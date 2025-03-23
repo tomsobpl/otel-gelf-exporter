@@ -27,8 +27,5 @@ jobs:
     - name: Display Go version
       run: go version
 
-    - name: Install dependencies
-      run: go get -u github.com/rakyll/gotest
-        
     - name: Test
-      run: gotest -v ./...
+      run: go test -v ./...
