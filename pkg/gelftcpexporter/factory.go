@@ -2,7 +2,6 @@ package gelftcpexporter
 
 import (
 	"context"
-	"github.com/tomsobpl/otel-gelf-exporter/pkg/gelfexporter"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
@@ -13,7 +12,7 @@ import (
 func NewFactory() exporter.Factory {
 	return exporter.NewFactory(
 		metadata.Type,
-		gelfexporter.CreateDefaultConfig,
+		CreateDefaultConfig,
 		exporter.WithLogs(createLogsExporter, metadata.ExporterStabilityLevel),
 	)
 }

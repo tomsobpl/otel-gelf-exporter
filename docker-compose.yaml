@@ -53,6 +53,8 @@ services:
       - "9000:9000/tcp"   # Server API
       - "12201:12201/tcp" # GELF TCP
       - "12201:12201/udp" # GELF UDP
+      - "12202:12202/tcp" # GELF TCP TLS
+      - "12202:12202/udp" # GELF UDP TLS
       - "13301:13301/tcp" # Forwarder data
       - "13302:13302/tcp" # Forwarder config
     volumes:
@@ -66,6 +68,7 @@ services:
     environment:
       OTEL_EXPORTER_GELF_TCP_ENDPOINT: "graylog_server:12201"
       OTEL_EXPORTER_GELF_UDP_ENDPOINT: "graylog_server:12201"
+      OTEL_EXPORTER_GELF_TLS_ENDPOINT: "graylog_server:12202"
     stdin_open: true
     stop_grace_period: "1s"
     tty: true
