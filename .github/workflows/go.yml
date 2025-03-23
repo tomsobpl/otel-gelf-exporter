@@ -28,9 +28,7 @@ jobs:
       run: go version
 
     - name: Install dependencies
-      run: |
-        go get .
-        go get -u github.com/rakyll/gotest
+      run: go get -u github.com/rakyll/gotest
         
     - name: Test
       run: gotest -v ./...
