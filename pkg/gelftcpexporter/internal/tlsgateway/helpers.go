@@ -1,4 +1,4 @@
-package gelftcpexporter
+package tlsgateway
 
 import "net"
 

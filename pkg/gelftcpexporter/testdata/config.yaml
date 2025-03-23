@@ -4,3 +4,7 @@ gelftcp/insecure:
   endpoint: "localhost:12201"
   endpoint_tls:
     enabled: false
+gelftcp/skipverify:
+  endpoint: "localhost:12201"
+  endpoint_tls:
+    insecure_skip_verify: true

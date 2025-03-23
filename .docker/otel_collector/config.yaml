@@ -16,6 +16,8 @@ exporters:
     endpoint: ${env:OTEL_EXPORTER_GELF_TLS_ENDPOINT}
     endpoint_refresh_interval: 120
     endpoint_refresh_strategy: interval
+    endpoint_tls:
+      insecure_skip_verify: true
   gelfudp:
     endpoint: ${env:OTEL_EXPORTER_GELF_UDP_ENDPOINT}
     endpoint_refresh_interval: 120

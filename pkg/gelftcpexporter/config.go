@@ -14,13 +14,18 @@ type EndpointTLS struct {
 	// Enabled is a flag that enables or disables TLS.
 	// Default is true.
 	Enabled bool `mapstructure:"enabled"`
+
+	// InsecureSkipVerify is a flag that determines whether to skip verification of the server's certificate chain and host name.
+	// Default is false.
+	InsecureSkipVerify bool `mapstructure:"insecure_skip_verify"`
 }
 
 func CreateDefaultConfig() component.Config {
 	return &Config{
 		Config: *gelfexporter.CreateDefaultConfig().(*gelfexporter.Config),
 		EndpointTLS: EndpointTLS{
-			Enabled: true,
+			Enabled:            true,
+			InsecureSkipVerify: false,
 		},
 	}
 }

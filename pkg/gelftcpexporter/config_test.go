@@ -27,7 +27,8 @@ func TestConfigLoading(t *testing.T) {
 					EndpointRefreshStrategy: gelfexporter.EndpointRefreshStrategyDefault,
 				},
 				EndpointTLS: EndpointTLS{
-					Enabled: true,
+					Enabled:            true,
+					InsecureSkipVerify: false,
 				},
 			},
 		},
@@ -40,7 +41,22 @@ func TestConfigLoading(t *testing.T) {
 					EndpointRefreshStrategy: gelfexporter.EndpointRefreshStrategyDefault,
 				},
 				EndpointTLS: EndpointTLS{
-					Enabled: false,
+					Enabled:            false,
+					InsecureSkipVerify: false,
+				},
+			},
+		},
+		{
+			id: component.NewIDWithName(component.MustNewType(gelfexporter.TcpExporterType), "skipverify"),
+			expected: &Config{
+				Config: gelfexporter.Config{
+					Endpoint:                "localhost:12201",
+					EndpointRefreshInterval: 60,
+					EndpointRefreshStrategy: gelfexporter.EndpointRefreshStrategyDefault,
+				},
+				EndpointTLS: EndpointTLS{
+					Enabled:            true,
+					InsecureSkipVerify: true,
 				},
 			},
 		},
