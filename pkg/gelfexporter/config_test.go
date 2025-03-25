@@ -21,15 +21,19 @@ func TestConfigLoading(t *testing.T) {
 			id: component.NewIDWithName(component.MustNewType(UdpExporterType), ""),
 			expected: &Config{
 				Endpoint:                "localhost:12201",
-				EndpointRefreshInterval: 60,
-				EndpointRefreshStrategy: EndpointRefreshStrategyDefault,
+				EndpointInitBackoff:     DefaultEndpointInitBackoff,
+				EndpointInitRetries:     DefaultEndpointInitRetries,
+				EndpointRefreshInterval: DefaultEndpointRefreshInterval,
+				EndpointRefreshStrategy: EndpointRefreshStrategyNone,
 			},
 		},
 		{
 			id: component.NewIDWithName(component.MustNewType(UdpExporterType), "permessage"),
 			expected: &Config{
 				Endpoint:                "localhost:12201",
-				EndpointRefreshInterval: 60,
+				EndpointInitBackoff:     DefaultEndpointInitBackoff,
+				EndpointInitRetries:     DefaultEndpointInitRetries,
+				EndpointRefreshInterval: DefaultEndpointRefreshInterval,
 				EndpointRefreshStrategy: EndpointRefreshStrategyPerMessage,
 			},
 		},
@@ -37,7 +41,9 @@ func TestConfigLoading(t *testing.T) {
 			id: component.NewIDWithName(component.MustNewType(UdpExporterType), "interval"),
 			expected: &Config{
 				Endpoint:                "localhost:12201",
-				EndpointRefreshInterval: 60,
+				EndpointInitBackoff:     DefaultEndpointInitBackoff,
+				EndpointInitRetries:     DefaultEndpointInitRetries,
+				EndpointRefreshInterval: DefaultEndpointRefreshInterval,
 				EndpointRefreshStrategy: EndpointRefreshStrategyInterval,
 			},
 		},
@@ -45,8 +51,20 @@ func TestConfigLoading(t *testing.T) {
 			id: component.NewIDWithName(component.MustNewType(UdpExporterType), "interval15"),
 			expected: &Config{
 				Endpoint:                "localhost:12201",
+				EndpointInitBackoff:     DefaultEndpointInitBackoff,
+				EndpointInitRetries:     DefaultEndpointInitRetries,
 				EndpointRefreshInterval: 15,
 				EndpointRefreshStrategy: EndpointRefreshStrategyInterval,
+			},
+		},
+		{
+			id: component.NewIDWithName(component.MustNewType(UdpExporterType), "custominit"),
+			expected: &Config{
+				Endpoint:                "localhost:12201",
+				EndpointInitBackoff:     12,
+				EndpointInitRetries:     3,
+				EndpointRefreshInterval: DefaultEndpointRefreshInterval,
+				EndpointRefreshStrategy: EndpointRefreshStrategyNone,
 			},
 		},
 	}

@@ -6,7 +6,10 @@ import (
 )
 
 const (
-	EndpointRefreshStrategyDefault    string = "none"
+	DefaultEndpointInitBackoff        int    = 10
+	DefaultEndpointInitRetries        int    = 5
+	DefaultEndpointRefreshInterval    int64  = 60
+	EndpointRefreshStrategyNone       string = "none"
 	EndpointRefreshStrategyInterval   string = "interval"
 	EndpointRefreshStrategyPerMessage string = "perMessage"
 	TcpExporterType                   string = "gelftcp"
@@ -16,6 +19,14 @@ const (
 type Config struct {
 	// Endpoint is the address of the GELF input.
 	Endpoint string `mapstructure:"endpoint"`
+
+	// EndpointInitBackoff is a delay between retries to initialize the endpoint.
+	// Default is 10.
+	EndpointInitBackoff int `mapstructure:"endpoint_init_backoff"`
+
+	// EndpointInitRetries is a number of retries to initialize the endpoint.
+	// Default is 5.
+	EndpointInitRetries int `mapstructure:"endpoint_init_retries"`
 
 	// EndpointRefreshInterval is the interval in seconds between endpoint refreshes.
 	// Default value is 60.
@@ -37,7 +48,7 @@ func (cfg *Config) Validate() error {
 	}
 
 	switch cfg.EndpointRefreshStrategy {
-	case EndpointRefreshStrategyDefault, EndpointRefreshStrategyInterval, EndpointRefreshStrategyPerMessage:
+	case EndpointRefreshStrategyNone, EndpointRefreshStrategyInterval, EndpointRefreshStrategyPerMessage:
 		break
 	default:
 		return errors.New("invalid endpoint refresh strategy")
@@ -49,7 +60,9 @@ func (cfg *Config) Validate() error {
 // CreateDefaultConfig creates the default configuration for the exporter.
 func CreateDefaultConfig() component.Config {
 	return &Config{
-		EndpointRefreshInterval: 60,
-		EndpointRefreshStrategy: EndpointRefreshStrategyDefault,
+		EndpointInitBackoff:     DefaultEndpointInitBackoff,
+		EndpointInitRetries:     DefaultEndpointInitRetries,
+		EndpointRefreshInterval: DefaultEndpointRefreshInterval,
+		EndpointRefreshStrategy: EndpointRefreshStrategyNone,
 	}
 }

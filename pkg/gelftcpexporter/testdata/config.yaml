@@ -8,3 +8,7 @@ gelftcp/skipverify:
   endpoint: "localhost:12201"
   endpoint_tls:
     insecure_skip_verify: true
+gelftcp/custominit:
+  endpoint: "localhost:12201"
+  endpoint_init_backoff: 15
+  endpoint_init_retries: 7

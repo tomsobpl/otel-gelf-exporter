@@ -10,3 +10,7 @@ gelfudp/interval15:
   endpoint: "localhost:12201"
   endpoint_refresh_interval: 15
   endpoint_refresh_strategy: "interval"
+gelfudp/custominit:
+  endpoint: "localhost:12201"
+  endpoint_init_backoff: 12
+  endpoint_init_retries: 3
