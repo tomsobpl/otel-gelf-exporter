@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.uber.org/zap"
 	"gopkg.in/Graylog2/go-gelf.v2/gelf"
+	"sync"
 	"time"
 )
 
@@ -21,6 +22,7 @@ type gelfUdpExporter struct {
 	writer                    *gelf.UDPWriter
 	writerEndpoint            string
 	writerEndpointRefreshTime int64
+	writerLock                sync.Mutex
 }
 
 func newGelfUdpExporter(cfg component.Config, set exporter.Settings) *gelfUdpExporter {
@@ -48,11 +50,36 @@ func (e *gelfUdpExporter) initGelfWriter() bool {
 	return e.writer != nil
 }
 
+func (e *gelfUdpExporter) initGelfWriterWithRetryAttempts() bool {
+	var i int
+	var initialized bool
+	var initBackoff = time.Duration(e.config.EndpointInitBackoff) * time.Second
+
+	e.writerLock.Lock()
+
+	for i = 0; i < e.config.EndpointInitRetries; i++ {
+		if initialized = e.initGelfWriter(); initialized {
+			break
+		}
+
+		e.logger.Debug(fmt.Sprintf("retrying to initialize GELF writer in %s", initBackoff.String()))
+		time.Sleep(initBackoff)
+	}
+
+	e.writerLock.Unlock()
+
+	if !initialized && i > e.config.EndpointInitRetries {
+		e.logger.Error(fmt.Sprintf("failed to initialize GELF writer after %d retries", e.config.EndpointInitRetries))
+	}
+
+	return initialized
+}
+
 func (e *gelfUdpExporter) start(_ context.Context, _ component.Host) error {
 	e.logger.Info("starting GELF UDP exporter")
 
-	if !e.initGelfWriter() {
-		e.logger.Error("failed to initialize GELF writer")
+	if !e.initGelfWriterWithRetryAttempts() {
+		return fmt.Errorf("failed to start exporter")
 	}
 
 	return nil
@@ -63,13 +90,17 @@ func (e *gelfUdpExporter) pushLogs(_ context.Context, ld plog.Logs) error {
 
 	if e.config.EndpointRefreshStrategy == gelfexporter.EndpointRefreshStrategyInterval && e.endpointRefreshIntervalExpired() {
 		e.logger.Debug(fmt.Sprintf("refreshing writer endpoint due to '%s' strategy", e.config.EndpointRefreshStrategy))
-		e.initGelfWriter()
+		if !e.initGelfWriterWithRetryAttempts() {
+			return fmt.Errorf("failed to refresh writer endpoint")
+		}
 	}
 
 	for _, m := range e.messageFactory.FromOtelLogsData(ld) {
 		if e.config.EndpointRefreshStrategy == gelfexporter.EndpointRefreshStrategyPerMessage {
 			e.logger.Debug(fmt.Sprintf("refreshing writer endpoint due to '%s' strategy", e.config.EndpointRefreshStrategy))
-			e.initGelfWriter()
+			if !e.initGelfWriterWithRetryAttempts() {
+				return fmt.Errorf("failed to refresh writer endpoint")
+			}
 		}
 
 		if err := e.writer.WriteMessage(m.GetRawMessage()); err != nil {

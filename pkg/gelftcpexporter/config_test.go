@@ -23,12 +23,14 @@ func TestConfigLoading(t *testing.T) {
 			expected: &Config{
 				Config: gelfexporter.Config{
 					Endpoint:                "localhost:12201",
-					EndpointRefreshInterval: 60,
-					EndpointRefreshStrategy: gelfexporter.EndpointRefreshStrategyDefault,
+					EndpointRefreshInterval: gelfexporter.DefaultEndpointRefreshInterval,
+					EndpointRefreshStrategy: gelfexporter.EndpointRefreshStrategyNone,
+					EndpointInitBackoff:     gelfexporter.DefaultEndpointInitBackoff,
+					EndpointInitRetries:     gelfexporter.DefaultEndpointInitRetries,
 				},
 				EndpointTLS: EndpointTLS{
-					Enabled:            true,
-					InsecureSkipVerify: false,
+					Enabled:            DefaultEndpointTLSEnabled,
+					InsecureSkipVerify: DefaultEndpointTLSInsecureSkipVerify,
 				},
 			},
 		},
@@ -37,12 +39,14 @@ func TestConfigLoading(t *testing.T) {
 			expected: &Config{
 				Config: gelfexporter.Config{
 					Endpoint:                "localhost:12201",
-					EndpointRefreshInterval: 60,
-					EndpointRefreshStrategy: gelfexporter.EndpointRefreshStrategyDefault,
+					EndpointRefreshInterval: gelfexporter.DefaultEndpointRefreshInterval,
+					EndpointRefreshStrategy: gelfexporter.EndpointRefreshStrategyNone,
+					EndpointInitBackoff:     gelfexporter.DefaultEndpointInitBackoff,
+					EndpointInitRetries:     gelfexporter.DefaultEndpointInitRetries,
 				},
 				EndpointTLS: EndpointTLS{
 					Enabled:            false,
-					InsecureSkipVerify: false,
+					InsecureSkipVerify: DefaultEndpointTLSInsecureSkipVerify,
 				},
 			},
 		},
@@ -51,12 +55,30 @@ func TestConfigLoading(t *testing.T) {
 			expected: &Config{
 				Config: gelfexporter.Config{
 					Endpoint:                "localhost:12201",
-					EndpointRefreshInterval: 60,
-					EndpointRefreshStrategy: gelfexporter.EndpointRefreshStrategyDefault,
+					EndpointRefreshInterval: gelfexporter.DefaultEndpointRefreshInterval,
+					EndpointRefreshStrategy: gelfexporter.EndpointRefreshStrategyNone,
+					EndpointInitBackoff:     gelfexporter.DefaultEndpointInitBackoff,
+					EndpointInitRetries:     gelfexporter.DefaultEndpointInitRetries,
 				},
 				EndpointTLS: EndpointTLS{
-					Enabled:            true,
+					Enabled:            DefaultEndpointTLSEnabled,
 					InsecureSkipVerify: true,
+				},
+			},
+		},
+		{
+			id: component.NewIDWithName(component.MustNewType(gelfexporter.TcpExporterType), "custominit"),
+			expected: &Config{
+				Config: gelfexporter.Config{
+					Endpoint:                "localhost:12201",
+					EndpointRefreshInterval: gelfexporter.DefaultEndpointRefreshInterval,
+					EndpointRefreshStrategy: gelfexporter.EndpointRefreshStrategyNone,
+					EndpointInitBackoff:     15,
+					EndpointInitRetries:     7,
+				},
+				EndpointTLS: EndpointTLS{
+					Enabled:            DefaultEndpointTLSEnabled,
+					InsecureSkipVerify: DefaultEndpointTLSInsecureSkipVerify,
 				},
 			},
 		},

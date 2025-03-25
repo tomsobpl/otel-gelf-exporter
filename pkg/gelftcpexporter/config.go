@@ -5,9 +5,16 @@ import (
 	"go.opentelemetry.io/collector/component"
 )
 
+const (
+	DefaultEndpointTLSEnabled            = true
+	DefaultEndpointTLSInsecureSkipVerify = false
+)
+
 type Config struct {
 	gelfexporter.Config `mapstructure:",squash"`
-	EndpointTLS         EndpointTLS `mapstructure:"endpoint_tls"`
+
+	// EndpointTLS is a configuration of the TLS connection.
+	EndpointTLS EndpointTLS `mapstructure:"endpoint_tls"`
 }
 
 type EndpointTLS struct {
@@ -24,8 +31,8 @@ func CreateDefaultConfig() component.Config {
 	return &Config{
 		Config: *gelfexporter.CreateDefaultConfig().(*gelfexporter.Config),
 		EndpointTLS: EndpointTLS{
-			Enabled:            true,
-			InsecureSkipVerify: false,
+			Enabled:            DefaultEndpointTLSEnabled,
+			InsecureSkipVerify: DefaultEndpointTLSInsecureSkipVerify,
 		},
 	}
 }
